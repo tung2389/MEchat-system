@@ -1,16 +1,18 @@
-// client.c
-
-#include <stdio.h>
+#include "socket_util.h"
 
 int main(int argc, char **argv)
 {   
-    if (argc < 2) 
-    {
-      fprintf(stderr, "client: You must specify the server hostname on the command line.");
-      exit(1);
+    char *host, *port;
+    if (argc != 3) {
+        fprintf(stderr, "usage: %s <host> <port>\n", argv[0]);
+        exit(1);
     }
+    host = argv[1], port = argv[2];
 
- 
+    int clientfd = open_clientfd(host, port);
+    if(clientfd == -1) {
+        exit(1);
+    }
   
-  return 0;
+    return 0;
 }
