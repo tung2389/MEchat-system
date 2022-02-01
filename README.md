@@ -26,12 +26,12 @@ MEchat contains two applications:
         1. The username can only contain alphanumeric character, hyphen or punctuation mark,
         2. The maximum length of the username is 30 characters.
 3. If the username is not valid, then the server send the message “invalid username” to the client, and the client will request another username from the user. 
-4. If the username is valid, then the server proceeds to the [matching phase](https://www.notion.so/MEchat-system-18540412dbcf4e89a4b80a20cc29272e).
+4. If the username is valid, then the server proceeds to the [matching phase](#Matching-phase).
 
 ### Matching phase
 
 1. If all current clients has been matched into pairs, then the server put the client on the wait until there’s a new connected client and send the message “wait” to the client.
-2. If there’s another client waiting to be matched, then the server will send the message “matched to {USERNAME}” to both clients to notify that they have been matched to each other. Then, the server proceeds to the [chatting phase](https://www.notion.so/MEchat-system-18540412dbcf4e89a4b80a20cc29272e) and spawn a separate thread to serve the conversation between these two clients.
+2. If there’s another client waiting to be matched, then the server will send the message “matched to {USERNAME}” to both clients to notify that they have been matched to each other. Then, the server proceeds to the [chatting phase](#Chatting-phase) and spawn a separate thread to serve the conversation between these two clients.
     1. The reasons that I spawn a new thread to serve each conversation between any two client is that this approach has reasonable complexity. Implementing I/O multiplexing on all clients is quite complex in C, and it involves downloading and building external libraries, such as GLib (for example, you need a hash table to efficiently associate a client with its corresponding partner).
 
 ### Chatting phase
