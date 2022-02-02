@@ -1,7 +1,5 @@
 #include "socket_util.h"
 
-#define BACKLOG 10 
-
 int open_clientfd(char *host, char *port) {
     int clientfd, rv;
     struct addrinfo hints, *servinfo, *p;
@@ -105,4 +103,23 @@ void get_sock_str(struct sockaddr *sa, char *sock_str) {
     sprintf(port_str, "%d", port_num);
 
     strcat(sock_str, port_str);
+}
+
+void add_to_pfds(struct pollfd **pfds, int newfd, int *fd_count, int *fd_size) {
+    if(*fd_count == *fd_size) {
+        *fd_size *= 2; // Double the size of the array
+        *pfds = realloc(*pfds, sizeof(**pfds) * (*fd_size));
+    }
+    (*pfds)[*fd_count].fd = newfd;
+    (*pfds)[*fd_count].events = POLLIN; // Check ready-to-read
+
+    (*fd_count)++;
+}
+
+void del_from_pfds(struct pollfd pfds[], int i, int *fd_count)
+{
+    // Copy the one from the end over this one
+    pfds[i] = pfds[*fd_count-1];
+
+    (*fd_count)--;
 }
