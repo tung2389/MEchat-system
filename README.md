@@ -40,7 +40,7 @@ MEchat contains two applications:
 1. The server uses I/O multiplexing to catch messages sent by clients. The message sent by any client must meet the following condition:
     1. The size of the message cannot be bigger than 2,000 bytes.
     2. The message cannot start with the character '#'. Strings that start with the '#' symbol are reserved for notification messages that the server sends to clients.
-2. If the message starts with the character '/', it is interpreted as a command. Here is the link to [list of commands](#2.-Commands). 
+2. If the message starts with the character '/', it is interpreted as a command. Here is the link to [list of commands](#2-Commands). 
     1. If the command is valid, then the server execute the command. 
     2. If the command is invalid, then the server send the message "#invalid_command" to the sending client. 
 3. If the message is invalid, then the server send the message "#invalid_message" to the sending client.
