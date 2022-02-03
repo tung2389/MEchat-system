@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdbool.h>
+#include <ctype.h>
 #include <netdb.h>
 #include <sys/types.h>
 #include <netinet/in.h>

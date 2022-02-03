@@ -2,10 +2,10 @@
 
 int open_clientfd(char *host, char *port) {
     int clientfd, rv;
-    struct addrinfo hints, *servinfo, *p;
+    addrinfo hints, *servinfo, *p;
     char server_info[INET6_ADDRSTRLEN + MAX_PORT_LEN + 1];
 
-    memset(&hints, 0, sizeof(struct addrinfo));
+    memset(&hints, 0, sizeof(addrinfo));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     
@@ -40,7 +40,7 @@ int open_clientfd(char *host, char *port) {
 int open_listenfd(char *port) {
     int listenfd, rv;
     int yes = 1; 
-    struct addrinfo hints, *servinfo, *p;
+    addrinfo hints, *servinfo, *p;
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -84,28 +84,28 @@ int open_listenfd(char *port) {
     return listenfd;
 } 
 
-void *get_in_addr(struct sockaddr *sa) {
+void *get_in_addr(sockaddr *sa) {
     if(sa->sa_family == AF_INET) {
-        return &( ((struct sockaddr_in *)sa)->sin_addr );
+        return &( ((sockaddr_in *)sa)->sin_addr );
     }
-    return &( ((struct sockaddr_in6 *)sa)->sin6_addr );
+    return &( ((sockaddr_in6 *)sa)->sin6_addr );
 }
 
-void get_sock_str(struct sockaddr *sa, char *sock_str) {
+void get_sock_str(sockaddr *sa, char *sock_str) {
     // Get IP address
     inet_ntop(sa->sa_family, get_in_addr(sa), sock_str, INET6_ADDRSTRLEN);
     strcat(sock_str, ":");
 
     // Get the port
     // Casting to sockaddr_in to access sin_port will return the correct port for both IPv4 and IPv6.
-    uint16_t port_num = htons(((struct sockaddr_in *) sa)->sin_port);
+    uint16_t port_num = htons(((sockaddr_in *) sa)->sin_port);
     char port_str[MAX_PORT_LEN];
     sprintf(port_str, "%d", port_num);
 
     strcat(sock_str, port_str);
 }
 
-void add_to_pfds(struct pollfd **pfds, int newfd, int *fd_count, int *fd_size) {
+void add_to_pfds(pollfd **pfds, int newfd, int *fd_count, int *fd_size) {
     if(*fd_count == *fd_size) {
         *fd_size *= 2; // Double the size of the array
         *pfds = realloc(*pfds, sizeof(**pfds) * (*fd_size));
@@ -116,7 +116,7 @@ void add_to_pfds(struct pollfd **pfds, int newfd, int *fd_count, int *fd_size) {
     (*fd_count)++;
 }
 
-void del_from_pfds(struct pollfd pfds[], int i, int *fd_count)
+void del_from_pfds(pollfd pfds[], int i, int *fd_count)
 {
     // Copy the one from the end over this one
     pfds[i] = pfds[*fd_count-1];

@@ -58,3 +58,8 @@ MEchat contains two applications:
 | ------------- | --------------------- | ----------------------------------- |
 | /quit         |                       | Quit the chat, close the connection |
 | /nickname     | [nickname]            | Change nickname                     |
+
+
+- For I/O multiplexing, I will use ```poll``` instead of ```epoll``` for the sake of portability, although ```epoll``` scales better. ```poll``` is a POSIX standard interface, while epoll is Linux-specific.
+- At the client side, the user sends a message by entering the message in the terminal, then hit ```Enter``` key.
+- When receive a new client without any waiting client, the server will pass
