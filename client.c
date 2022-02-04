@@ -1,10 +1,13 @@
 #include "socket_util.h"
 
+void sendNickname(int clientfd, char *nickname, char *buf);
+void handleMatching(int clientfd, char *buf);
+
 int main(int argc, char **argv)
 {   
     char *host, *port;
-    char nickname[NICKNAME_LEN + 1]; // + 1 to account for the newline character.
-    char msg[MSG_LEN];
+    char nickname[NICKNAME_LEN + 2]; // + 1 to account for the newline character.
+    char buf[CLIENT_BUF_LEN + 1];
     // Don't buffer on stdout, since this is a chat app.
     setbuf(stdout, NULL);
     
@@ -18,20 +21,37 @@ int main(int argc, char **argv)
     if(clientfd == -1) {
         exit(1);
     }
+    sendNickname(clientfd, nickname, buf);
+    handleMatching(clientfd, buf);
 
-    strcpy(msg, INVALID_NICKNAME_MSG);
-    while(strcmp(msg, INVALID_NICKNAME_MSG) == 0) {
+    close(clientfd);
+    return 0;
+}
+
+void sendNickname(int clientfd, char *nickname, char *buf) {
+    strcpy(buf, INVALID_NICKNAME_MSG);
+    while(strcmp(buf, INVALID_NICKNAME_MSG) == 0) {
         printf("Enter your nickname:\n");
         fgets(nickname, NICKNAME_LEN + 1, stdin);
         // Delete the newline character
         nickname[strlen(nickname) - 1] = '\0';
         send(clientfd, nickname, NICKNAME_LEN, 0);
-        recv(clientfd, msg, sizeof msg, 0);
-        if(strcmp(msg, INVALID_NICKNAME_MSG) == 0) {
-            printf("Your nickname is invalid\n");
+        int nbytes = recv(clientfd, buf, MSG_LEN, 0);
+        buf[nbytes] = '\0';
+        if(strcmp(buf, INVALID_NICKNAME_MSG) == 0) {
+            printf("Your nickname is invalid.\n");
         }
     }
+}
 
-    close(clientfd);
-    return 0;
+void handleMatching(int clientfd, char *buf) {
+    if(strcmp(buf, WAIT_MSG) == 0) {
+        printf("Please wait while we find a match for you.\n");
+        int nbytes = recv(clientfd, buf, MSG_LEN, 0);
+        buf[nbytes] = '\0';
+    }
+    int offset = strlen("#matched_to_");
+    char partner_nickname[NICKNAME_LEN];
+    strcpy(partner_nickname, buf + offset);
+    printf("You get matched to %s. Now both of you can send message to each other.\n", partner_nickname);
 }

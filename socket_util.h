@@ -24,6 +24,10 @@ typedef struct sockaddr_in6 sockaddr_in6;
 typedef struct sockaddr_storage sockaddr_storage;
 typedef struct pollfd pollfd;
 
+const char *INVALID_NICKNAME_MSG;
+const char *WAIT_MSG;
+const char *MATCH_MSG;
+
 int open_clientfd(char *host, char *port);
 int open_listenfd(char *port);
 

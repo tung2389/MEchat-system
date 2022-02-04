@@ -1,11 +1,9 @@
 #include "socket_util.h"
 
-const char *INVALID_NICKNAME_MSG = "#invalid_nickname";
-
 // User's info that will be passed into new thread
 typedef struct usr_info_t {
     int fd;
-    char nickname[NICKNAME_LEN];
+    char nickname[NICKNAME_LEN + 1];
 } usr_info;
 
 bool validNickname(char *nickname);
@@ -22,7 +20,8 @@ int main(int argc, char **argv)
     int listenfd; // Listening socket descriptor
     sockaddr_storage client_addr; // Client address
     socklen_t addrlen;
-    char client_info[INET6_ADDRSTRLEN + MAX_PORT_LEN + 1], nickname[NICKNAME_LEN + 1]; 
+    char client_info[INET6_ADDRSTRLEN + MAX_PORT_LEN + 2]; // + 1 to account for the newline character.
+    char nickname[NICKNAME_LEN + 2]; // + 1 to check for over-size nickname.
     /*
     The index of the first client, who goes into wait list first, in the poll watch list. It is used for removal when this client get matched.
     */
@@ -74,7 +73,7 @@ int main(int argc, char **argv)
                 and either put the client on the wait, or match with another client, depending on the situation
                 */
                 else {
-                    int nbytes = recv(pfds[i].fd, nickname, sizeof nickname, 0);
+                    int nbytes = recv(pfds[i].fd, nickname, sizeof(nickname) - 1, 0);
                     if(nbytes <= 0) {
                         // This client cannot wait further and disconnected. 
                         if(nbytes == 0) {
@@ -93,13 +92,13 @@ int main(int argc, char **argv)
                     }
 
                     if(!validNickname(nickname)) {
-                        send(pfds[i].fd, INVALID_NICKNAME_MSG, sizeof INVALID_NICKNAME_MSG, 0);
+                        send(pfds[i].fd, INVALID_NICKNAME_MSG, strlen(INVALID_NICKNAME_MSG), 0);
                         continue;
                     }
                     int clientfd = pfds[i].fd;
-
                     // Currently there's no client waiting
                     if(clients == NULL) {
+                        send(pfds[i].fd, WAIT_MSG, strlen(WAIT_MSG), 0);
                         clients = malloc(2 * sizeof(usr_info));
                         clients[0].fd = clientfd;
                         strcpy(clients[0].nickname, nickname);
@@ -112,6 +111,17 @@ int main(int argc, char **argv)
                         del_from_pfds(pfds, i, &fd_count);
                         del_from_pfds(pfds, first_id, &fd_count);
                         pthread_create(&tid, NULL, chatHandler, clients);
+
+                        char matched_msg[strlen(MATCH_MSG) + NICKNAME_LEN];
+                        strcpy(matched_msg, MATCH_MSG);
+                        strcpy(matched_msg + strlen(MATCH_MSG), clients[1].nickname);
+                        send(clients[0].fd, matched_msg, strlen(matched_msg), 0);
+                        printf(matched_msg);
+                        fflush(stdout);
+
+                        strcpy(matched_msg + strlen(MATCH_MSG), clients[0].nickname);
+                        send(clients[1].fd, matched_msg, strlen(matched_msg), 0);
+
                         clients = NULL;
                     }
                 }

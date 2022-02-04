@@ -1,9 +1,13 @@
 #include "socket_util.h"
 
+const char *INVALID_NICKNAME_MSG = "#invalid_nickname";
+const char *WAIT_MSG = "#wait";
+const char *MATCH_MSG = "#matched_to_";
+
 int open_clientfd(char *host, char *port) {
     int clientfd, rv;
     addrinfo hints, *servinfo, *p;
-    char server_info[INET6_ADDRSTRLEN + MAX_PORT_LEN + 1];
+    char server_info[INET6_ADDRSTRLEN + MAX_PORT_LEN + 2]; // including the ':' character
 
     memset(&hints, 0, sizeof(addrinfo));
     hints.ai_family = AF_UNSPEC;
@@ -108,7 +112,7 @@ void get_sock_str(sockaddr *sa, char *sock_str) {
 void add_to_pfds(pollfd **pfds, int newfd, int *fd_count, int *fd_size) {
     if(*fd_count == *fd_size) {
         *fd_size *= 2; // Double the size of the array
-        *pfds = realloc(*pfds, sizeof(**pfds) * (*fd_size));
+        *pfds = realloc(*pfds, sizeof(pollfd) * (*fd_size));
     }
     (*pfds)[*fd_count].fd = newfd;
     (*pfds)[*fd_count].events = POLLIN; // Check ready-to-read
