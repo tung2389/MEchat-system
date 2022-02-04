@@ -1,20 +1,30 @@
 all: client server
 
-headers := socket_util.h shared.h
+headers := socket_util.h util.h shared.h
+util := socket_util.o util.o shared.o
 
-client: client.o socket_util.o
-	gcc client.o socket_util.o -o client
+client: client.o $(util)
+	gcc client.o $(util) -o client
 
 client.o: client.c $(headers)
 	gcc -c client.c
 
-server: server.o socket_util.o
-	gcc -pthread server.o socket_util.o -o server
+server: server.o server_helper.o $(util)
+	gcc -pthread server.o server_helper.o $(util) -o server
 
-server.o: server.c $(headers)	
+server.o: server.c server_helper.h $(headers)	 
 	gcc -c server.c
 
-socket_util.o: socket_util.c $(headers)
+server_helper.o: server_helper.c shared.h
+	gcc -c server_helper.c
+
+shared.o: shared.c
+	gcc -c shared.c
+
+util.o: util.c
+	gcc -c util.c
+
+socket_util.o: socket_util.c shared.h
 	gcc -c socket_util.c
 
 clean:

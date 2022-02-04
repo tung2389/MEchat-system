@@ -1,4 +1,19 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdbool.h>
+#include <ctype.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+
 #include "socket_util.h"
+#include "util.h"
+#include "shared.h"
 
 void sendNickname(int clientfd, char *nickname, char *buf);
 void handleMatching(int clientfd, char *buf);

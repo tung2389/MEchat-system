@@ -1,12 +1,28 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdbool.h>
+#include <ctype.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+#include <poll.h>
+
 #include "socket_util.h"
+#include "util.h"
+#include "server_helper.h"
+#include "shared.h"
 
 // User's info that will be passed into new thread
-typedef struct usr_info_t {
+typedef struct {
     int fd;
-    char nickname[NICKNAME_LEN + 1];
+    char *nickname;
 } usr_info;
 
-bool validNickname(char *nickname);
 void *chatHandler(void *arg);
 
 int main(int argc, char **argv)
@@ -91,7 +107,7 @@ int main(int argc, char **argv)
                         continue;
                     }
 
-                    if(!validNickname(nickname)) {
+                    if(!valid_nickname(nickname)) {
                         send(pfds[i].fd, INVALID_NICKNAME_MSG, strlen(INVALID_NICKNAME_MSG), 0);
                         continue;
                     }
@@ -101,12 +117,14 @@ int main(int argc, char **argv)
                         send(pfds[i].fd, WAIT_MSG, strlen(WAIT_MSG), 0);
                         clients = malloc(2 * sizeof(usr_info));
                         clients[0].fd = clientfd;
+                        clients[0].nickname = malloc_str(strlen(nickname));
                         strcpy(clients[0].nickname, nickname);
                         first_id = i;
                     }
                     // There's already a client waiting. 
                     else {
                         clients[1].fd = clientfd;
+                        clients[1].nickname = malloc_str(strlen(nickname));
                         strcpy(clients[1].nickname, nickname);
                         del_from_pfds(pfds, i, &fd_count);
                         del_from_pfds(pfds, first_id, &fd_count);
@@ -116,8 +134,6 @@ int main(int argc, char **argv)
                         strcpy(matched_msg, MATCH_MSG);
                         strcpy(matched_msg + strlen(MATCH_MSG), clients[1].nickname);
                         send(clients[0].fd, matched_msg, strlen(matched_msg), 0);
-                        printf(matched_msg);
-                        fflush(stdout);
 
                         strcpy(matched_msg + strlen(MATCH_MSG), clients[0].nickname);
                         send(clients[1].fd, matched_msg, strlen(matched_msg), 0);
@@ -128,23 +144,66 @@ int main(int argc, char **argv)
             }
         }
     }
+
+    free(pfds);
     return 0;
 }
 
-bool validNickname(char *nickname) {
-    // Too long or too short
-    if(strlen(nickname) == NICKNAME_LEN + 1 || strlen(nickname) <= 1) {
-        return false;
+void *chatHandler(void *arg_raw) {
+    pthread_detach(pthread_self());
+    usr_info *arg = (usr_info *) arg_raw;
+    char msg[MSG_LEN + 2]; // +1 to check for message which is too long
+
+    int fd_count = 2;
+    int fd_size = 2;
+    pollfd *pfds = malloc(sizeof(pollfd) * fd_size);
+    /*
+    Save all nicknames in paralell with their corresponding socket descriptor using an array, since we do not have a hash table in C to keep track of 
+    this association. Later, if the need for adding more user or removing users to and from the this chat room arises, the adding and removing function
+    for nicknames can be implemented the same as for pfds. 
+    */
+    char **nicknames = malloc(sizeof(char *) * fd_size);
+    for(int i = 0; i < fd_size; i++) {
+        pfds[i].fd = arg[i].fd;
+        nicknames[i] = arg[i].nickname;
     }
-    // Contains invalid character
-    for(int i = 0; i < strlen(nickname); i++) {
-        if(!isalnum(nickname[i]) && nickname[i] != '-' && nickname[i] != '.') {
-            return false;
+    free(arg);
+
+    bool terminate = false; // terminate = true means at least one client disconnected, so close the thread.
+    while(!terminate) {
+        int poll_count = poll(pfds, fd_count, -1);
+        if(poll_count == -1) {
+            fprintf(stderr, "poll error\n");
+            exit(1);
+        }
+        
+        // Run through the existing connections looking for data to read    
+        for(int i = 0; i < fd_count; i++) {
+            int nbytes = recv(pfds[i].fd, msg, sizeof(msg) - 1, 0);
+            if(nbytes <= 0) {
+                // This client has disconnected
+                if(nbytes == 0) {
+                    send_msg(pfds[i].fd, pfds, fd_count, QUIT_MSG);
+                }
+                else {
+                    fprintf(stderr, "recv error\n");
+                }
+                // Close all connections in this thread
+                for(int j = 0; j < fd_count; j++) {
+                    close(pfds[j].fd);   
+                }           
+                terminate = true;
+                break;
+            }
+            if(is_command(msg)) {
+
+            }
         }
     }
-    return true;
-}
 
-void *chatHandler(void *arg) {
-
+    free(pfds);
+    for(int i = 0; i < fd_count; i++) {
+        free(nicknames[i]);
+    }
+    free(nicknames);
 }

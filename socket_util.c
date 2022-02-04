@@ -1,8 +1,37 @@
-#include "socket_util.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+#include <poll.h>
 
-const char *INVALID_NICKNAME_MSG = "#invalid_nickname";
-const char *WAIT_MSG = "#wait";
-const char *MATCH_MSG = "#matched_to_";
+#include "shared.h"
+
+void *get_in_addr(sockaddr *sa) {
+    if(sa->sa_family == AF_INET) {
+        return &( ((sockaddr_in *)sa)->sin_addr );
+    }
+    return &( ((sockaddr_in6 *)sa)->sin6_addr );
+}
+
+void get_sock_str(sockaddr *sa, char *sock_str) {
+    // Get IP address
+    inet_ntop(sa->sa_family, get_in_addr(sa), sock_str, INET6_ADDRSTRLEN);
+    strcat(sock_str, ":");
+
+    // Get the port
+    // Casting to sockaddr_in to access sin_port will return the correct port for both IPv4 and IPv6.
+    uint16_t port_num = htons(((sockaddr_in *) sa)->sin_port);
+    char port_str[MAX_PORT_LEN];
+    sprintf(port_str, "%d", port_num);
+
+    strcat(sock_str, port_str);
+}
 
 int open_clientfd(char *host, char *port) {
     int clientfd, rv;
@@ -87,27 +116,6 @@ int open_listenfd(char *port) {
 
     return listenfd;
 } 
-
-void *get_in_addr(sockaddr *sa) {
-    if(sa->sa_family == AF_INET) {
-        return &( ((sockaddr_in *)sa)->sin_addr );
-    }
-    return &( ((sockaddr_in6 *)sa)->sin6_addr );
-}
-
-void get_sock_str(sockaddr *sa, char *sock_str) {
-    // Get IP address
-    inet_ntop(sa->sa_family, get_in_addr(sa), sock_str, INET6_ADDRSTRLEN);
-    strcat(sock_str, ":");
-
-    // Get the port
-    // Casting to sockaddr_in to access sin_port will return the correct port for both IPv4 and IPv6.
-    uint16_t port_num = htons(((sockaddr_in *) sa)->sin_port);
-    char port_str[MAX_PORT_LEN];
-    sprintf(port_str, "%d", port_num);
-
-    strcat(sock_str, port_str);
-}
 
 void add_to_pfds(pollfd **pfds, int newfd, int *fd_count, int *fd_size) {
     if(*fd_count == *fd_size) {
