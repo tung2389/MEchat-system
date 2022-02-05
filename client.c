@@ -51,8 +51,7 @@ void sendNickname(int clientfd, char *nickname, char *buf) {
         // Delete the newline character
         nickname[strlen(nickname) - 1] = '\0';
         send(clientfd, nickname, NICKNAME_LEN, 0);
-        int nbytes = recv(clientfd, buf, MSG_LEN, 0);
-        buf[nbytes] = '\0';
+        recv_w(clientfd, buf, MSG_LEN, 0);
         if(strcmp(buf, INVALID_NICKNAME_MSG) == 0) {
             printf("Your nickname is invalid.\n");
         }
@@ -62,8 +61,7 @@ void sendNickname(int clientfd, char *nickname, char *buf) {
 void handleMatching(int clientfd, char *buf) {
     if(strcmp(buf, WAIT_MSG) == 0) {
         printf("Please wait while we find a match for you.\n");
-        int nbytes = recv(clientfd, buf, MSG_LEN, 0);
-        buf[nbytes] = '\0';
+        recv_w(clientfd, buf, MSG_LEN, 0);
     }
     int offset = strlen("#matched_to_");
     char partner_nickname[NICKNAME_LEN];

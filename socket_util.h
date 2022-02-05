@@ -22,4 +22,7 @@ void add_to_pfds(pollfd **pfds, int newfd, int *fd_count, int *fd_size);
 // Remove an index from the set
 void del_from_pfds(pollfd pfds[], int i, int *fd_count);
 
+// recv from sockfd and overwrite buf (by append NULL-terminator at the end of new data)
+ssize_t recv_w(int sockfd, void *buf, size_t len, int flags);
+
 #endif

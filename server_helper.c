@@ -37,6 +37,8 @@ void send_msg(int sendfd, pollfd *pfds, int fd_count, const char *msg) {
     }
 }
 
+void send_msg_all();
+
 bool is_command(char *msg) {
     if(strlen(msg) > 0 && msg[0] == '/') return true;
     return false;
@@ -52,9 +54,11 @@ bool valid_command(char *cmd) {
     return false;
 }
 
-// void execute_command(char *cmd) {
-//     if(strcmp(cmd, "/nickname"))
-// }
+void execute_command(int sendfd, pollfd *pfds, int fd_count, const char *cmd) {
+    if(strcmp(cmd, "/nickname")) {
+
+    }
+}
 
 bool valid_msg(char *msg) {
     // Too long or too short

@@ -89,18 +89,16 @@ int main(int argc, char **argv)
                 and either put the client on the wait, or match with another client, depending on the situation
                 */
                 else {
-                    int nbytes = recv(pfds[i].fd, nickname, sizeof(nickname) - 1, 0);
+                    int nbytes = recv_w(pfds[i].fd, nickname, sizeof(nickname) - 1, 0);
+                    // This client cannot wait further and disconnected. 
                     if(nbytes <= 0) {
-                        // This client cannot wait further and disconnected. 
-                        if(nbytes == 0) {
-                            // If this client has been put in the wait, then remove the client.
-                            if(clients != NULL && clients[0].fd == pfds[i].fd) {
-                                free(clients);
-                                clients = NULL;
-                            }
-                        }
-                        else {
+                        if(nbytes < 0) {
                             fprintf(stderr, "recv error\n");
+                        }
+                        // If this client has been put in the wait, then remove the client.
+                        if(clients != NULL && clients[0].fd == pfds[i].fd) {
+                            free(clients);
+                            clients = NULL;
                         }
                         close(pfds[i].fd);
                         del_from_pfds(pfds, i, &fd_count);
@@ -128,7 +126,6 @@ int main(int argc, char **argv)
                         strcpy(clients[1].nickname, nickname);
                         del_from_pfds(pfds, i, &fd_count);
                         del_from_pfds(pfds, first_id, &fd_count);
-                        pthread_create(&tid, NULL, chatHandler, clients);
 
                         char matched_msg[strlen(MATCH_MSG) + NICKNAME_LEN];
                         strcpy(matched_msg, MATCH_MSG);
@@ -138,6 +135,7 @@ int main(int argc, char **argv)
                         strcpy(matched_msg + strlen(MATCH_MSG), clients[0].nickname);
                         send(clients[1].fd, matched_msg, strlen(matched_msg), 0);
 
+                        pthread_create(&tid, NULL, chatHandler, clients);
                         clients = NULL;
                     }
                 }
@@ -179,7 +177,7 @@ void *chatHandler(void *arg_raw) {
         
         // Run through the existing connections looking for data to read    
         for(int i = 0; i < fd_count; i++) {
-            int nbytes = recv(pfds[i].fd, msg, sizeof(msg) - 1, 0);
+            int nbytes = recv_w(pfds[i].fd, msg, sizeof(msg) - 1, 0);
             if(nbytes <= 0) {
                 // This client has disconnected
                 if(nbytes == 0) {

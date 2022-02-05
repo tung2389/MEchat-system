@@ -135,3 +135,10 @@ void del_from_pfds(pollfd pfds[], int i, int *fd_count)
 
     (*fd_count)--;
 }
+
+ssize_t recv_w(int sockfd, void *buf_raw, size_t len, int flags) {
+    char *buf = buf_raw;
+    int nbytes = recv(sockfd, buf, len, 0);
+    buf[nbytes] = '\0';
+    return nbytes;
+}
