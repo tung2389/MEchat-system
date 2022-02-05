@@ -22,15 +22,10 @@ void *get_in_addr(sockaddr *sa) {
 void get_sock_str(sockaddr *sa, char *sock_str) {
     // Get IP address
     inet_ntop(sa->sa_family, get_in_addr(sa), sock_str, INET6_ADDRSTRLEN);
-    strcat(sock_str, ":");
-
     // Get the port
     // Casting to sockaddr_in to access sin_port will return the correct port for both IPv4 and IPv6.
     uint16_t port_num = htons(((sockaddr_in *) sa)->sin_port);
-    char port_str[MAX_PORT_LEN];
-    sprintf(port_str, "%d", port_num);
-
-    strcat(sock_str, port_str);
+    sprintf(sock_str, "%s:%d", sock_str, port_num);
 }
 
 int open_clientfd(char *host, char *port) {

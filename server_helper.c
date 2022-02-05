@@ -37,26 +37,32 @@ void send_msg(int sendfd, pollfd *pfds, int fd_count, const char *msg) {
     }
 }
 
-void send_msg_all();
+void send_msg_all(int sendfd, pollfd *pfds, int fd_count, const char *msg) {
+    for(int i = 0; i < fd_count; i++) {
+        send(pfds[i].fd, msg, strlen(msg), 0);
+    }
+};
 
 bool is_command(char *msg) {
     if(strlen(msg) > 0 && msg[0] == '/') return true;
     return false;
 }
 
-bool valid_command(char *cmd) {
-    char *commands[NUM_CMDS] = {"/nickname", "/quit"};
+int get_cmd_id(char *cmd) {
     for(int i = 0; i < NUM_CMDS; i++) {
-        if(strcmp(commands[i], cmd) == 0) {
-            return true;
+        if(strncmp(commands[i], cmd, strlen(commands[i])) == 0) {
+            return i;
         }
     }
-    return false;
+    return -1;
 }
 
-void execute_command(int sendfd, pollfd *pfds, int fd_count, const char *cmd) {
-    if(strcmp(cmd, "/nickname")) {
-
+void execute_command(int sendfd, pollfd *pfds, int fd_count, const char *cmd, int cmd_id, char *nickname) {
+    if(strcmp(commands[cmd_id], "/nickname")) {
+        int len = strlen(" changes nickname to ");
+        char msg[NICKNAME_LEN + len + NICKNAME_LEN + 1]; // +2 to accounts for the distance between the nickname and the actual message
+        sprintf(msg, "%s changes nickname to %s", nickname, cmd + strlen("/nickname "));
+        send_msg_all(sendfd, pfds, fd_count, msg);
     }
 }
 

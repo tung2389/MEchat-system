@@ -30,4 +30,6 @@ const char *INVALID_CMD_MSG;
 const char *INVALID_MSG_MSG;
 const char *QUIT_MSG;
 
+const char *commands[NUM_CMDS];
+
 #endif

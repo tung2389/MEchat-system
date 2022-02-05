@@ -128,11 +128,10 @@ int main(int argc, char **argv)
                         del_from_pfds(pfds, first_id, &fd_count);
 
                         char matched_msg[strlen(MATCH_MSG) + NICKNAME_LEN];
-                        strcpy(matched_msg, MATCH_MSG);
-                        strcpy(matched_msg + strlen(MATCH_MSG), clients[1].nickname);
+                        sprintf(matched_msg, "%s%s", MATCH_MSG, clients[1].nickname);
                         send(clients[0].fd, matched_msg, strlen(matched_msg), 0);
 
-                        strcpy(matched_msg + strlen(MATCH_MSG), clients[0].nickname);
+                        sprintf(matched_msg, "%s%s", MATCH_MSG, clients[0].nickname);
                         send(clients[1].fd, matched_msg, strlen(matched_msg), 0);
 
                         pthread_create(&tid, NULL, chatHandler, clients);
@@ -195,6 +194,9 @@ void *chatHandler(void *arg_raw) {
             }
             if(is_command(msg)) {
 
+            }
+            else {
+                char buf[NICKNAME_LEN + MSG_LEN + 3]; // +2 to accounts for the distance between the nickname and the actual message
             }
         }
     }

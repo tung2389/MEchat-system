@@ -6,3 +6,5 @@ const char *MATCH_MSG = "#matched_to_";
 const char *INVALID_CMD_MSG = "#invalid_command";
 const char *INVALID_MSG_MSG = "#invalid_message";
 const char *QUIT_MSG = "#user_quit";
+
+const char *commands[2] = {"/nickname", "/quit"};

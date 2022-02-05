@@ -16,6 +16,8 @@ Functions for chatting phase
 
 // Broadcast the message to all clients except the sending client
 void send_msg(int sendfd, pollfd *pfds, int fd_count, const char *msg);
+// Broadcast the message to all clients
+void send_msg_all(int sendfd, pollfd *pfds, int fd_count, const char *msg);
 bool is_command(char *msg);
 bool valid_command(char *cmd);
 void execute_command(char *cmd);
