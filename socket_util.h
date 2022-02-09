@@ -14,12 +14,14 @@
 int open_clientfd(char *host, char *port);
 int open_listenfd(char *port);
 
+// Return the IP address of sockaddr.
 void *get_in_addr(sockaddr *sa);
+// Return the address of sockaddr in the format [IP]:[PORT] to the string sock_str.
 void get_sock_str(sockaddr *sa, char *sock_str);
 
-// Add a new file descriptor to the set
+// Add a new file descriptor to the set of pollfd
 void add_to_pfds(pollfd **pfds, int newfd, int *fd_count, int *fd_size);
-// Remove an index from the set
+// Remove file descriptor at index i of the set of pollfd from the set
 void del_from_pfds(pollfd pfds[], int i, int *fd_count);
 
 // recv from sockfd and overwrite buf (by append NULL-terminator at the end of new data)

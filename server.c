@@ -31,6 +31,9 @@ int main(int argc, char **argv)
         fprintf(stderr, "usage: %s <port>\n", argv[0]);
         exit(1);
     }
+
+    // Don't buffer on stdout, we want server logs to be real time.
+    setbuf(stdout, NULL);
     
     char *port;
     int listenfd; // Listening socket descriptor
@@ -67,9 +70,10 @@ int main(int argc, char **argv)
             fprintf(stderr, "poll error\n");
             exit(1);
         }
-        
+        // Save the current fd_count in a temp variable for the sake of the loop, since fd_count can be updated inside the loop.
+        int fd_count_temp = fd_count;
         // Run through the existing connections looking for data to read    
-        for(int i = 0; i < fd_count; i++) {
+        for(int i = 0; i < fd_count_temp; i++) {
             // Check if someone's ready to read
             if(pfds[i].revents & POLLIN) {
                 if(pfds[i].fd == listenfd) { // New connection

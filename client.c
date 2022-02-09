@@ -16,6 +16,9 @@
 #include "util.h"
 #include "shared.h"
 
+// If the number of bytes received <= 0, then the server has disconnected, so the client will exit.
+ssize_t client_recv(int sockfd, void *buf_raw, size_t len, int flags);
+
 void sendNickname(int clientfd, char *nickname, char *buf);
 void handleMatching(int clientfd, char *buf);
 void handleChatting(int clientfd, char *buf);
@@ -46,13 +49,23 @@ int main(int argc, char **argv)
     return 0;
 }
 
+ssize_t client_recv(int sockfd, void *buf_raw, size_t len, int flags) {
+    char *buf = buf_raw;
+    int nbytes = recv_w(sockfd, buf, len, 0);
+    if(nbytes <= 0) {
+        printf("The server has closed connection.\n");
+        exit(0);
+    }
+    return nbytes;
+}
+
 void sendNickname(int clientfd, char *nickname, char *buf) {
     strcpy(buf, INVALID_NICKNAME_MSG);
     while(strcmp(buf, INVALID_NICKNAME_MSG) == 0) {
         printf("Enter your nickname:\n");
         fgets_str(nickname, NICKNAME_LEN, stdin);
         send(clientfd, nickname, NICKNAME_LEN, 0);
-        recv_w(clientfd, buf, MSG_LEN, 0);
+        client_recv(clientfd, buf, MSG_LEN, 0);
         if(strcmp(buf, INVALID_NICKNAME_MSG) == 0) {
             printf("Your nickname is invalid.\n");
         }
@@ -62,7 +75,7 @@ void sendNickname(int clientfd, char *nickname, char *buf) {
 void handleMatching(int clientfd, char *buf) {
     if(strcmp(buf, WAIT_MSG) == 0) {
         printf("Please wait while we find a match for you.\n");
-        recv_w(clientfd, buf, MSG_LEN, 0);
+        client_recv(clientfd, buf, MSG_LEN, 0);
     }
     int offset = strlen("#matched_to_");
     char partner_nickname[NICKNAME_LEN];
@@ -91,7 +104,7 @@ void handleChatting(int clientfd, char *buf) {
                     send(clientfd, buf, strlen(buf), 0);
                 }
                 else {
-                    int nbytes = recv_w(clientfd, buf, CLIENT_BUF_LEN, 0);
+                    int nbytes = client_recv(clientfd, buf, CLIENT_BUF_LEN, 0);
                     if(nbytes <= 0) {
                         printf("The server has closed connection.\n");
                         exit(0);
@@ -114,4 +127,5 @@ void handleChatting(int clientfd, char *buf) {
             }
         }
     }
+    free(pfds);
 }
