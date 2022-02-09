@@ -6,3 +6,9 @@ char *malloc_str(int len) {
     p[len] = '\0';
     return p;
 }
+
+char *fgets_str(char *str, int num , FILE *stream) {
+    fgets(str, num + 1, stream);
+    str[strlen(str) - 1] = '\0';
+    return str;
+}

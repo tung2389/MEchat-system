@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <poll.h>
 
 #include "socket_util.h"
 #include "util.h"
@@ -17,6 +18,7 @@
 
 void sendNickname(int clientfd, char *nickname, char *buf);
 void handleMatching(int clientfd, char *buf);
+void handleChatting(int clientfd, char *buf);
 
 int main(int argc, char **argv)
 {   
@@ -38,6 +40,7 @@ int main(int argc, char **argv)
     }
     sendNickname(clientfd, nickname, buf);
     handleMatching(clientfd, buf);
+    handleChatting(clientfd, buf);
 
     close(clientfd);
     return 0;
@@ -47,9 +50,7 @@ void sendNickname(int clientfd, char *nickname, char *buf) {
     strcpy(buf, INVALID_NICKNAME_MSG);
     while(strcmp(buf, INVALID_NICKNAME_MSG) == 0) {
         printf("Enter your nickname:\n");
-        fgets(nickname, NICKNAME_LEN + 1, stdin);
-        // Delete the newline character
-        nickname[strlen(nickname) - 1] = '\0';
+        fgets_str(nickname, NICKNAME_LEN, stdin);
         send(clientfd, nickname, NICKNAME_LEN, 0);
         recv_w(clientfd, buf, MSG_LEN, 0);
         if(strcmp(buf, INVALID_NICKNAME_MSG) == 0) {
@@ -67,4 +68,46 @@ void handleMatching(int clientfd, char *buf) {
     char partner_nickname[NICKNAME_LEN];
     strcpy(partner_nickname, buf + offset);
     printf("You get matched to %s. Now both of you can send message to each other.\n", partner_nickname);
+}
+
+void handleChatting(int clientfd, char *buf) {
+    int fd_count = 2;
+    int fd_size = 2;
+    pollfd *pfds = malloc(sizeof(pollfd) * fd_size);
+
+    pfds[0].fd = clientfd;
+    pfds[1].fd = STDIN_FILENO;
+
+    for(int i = 0; i < fd_count; i++) {
+        pfds[i].events = POLLIN;
+    }
+
+    while(strcmp(buf, QUIT_MSG) != 0) {
+        int poll_count = poll(pfds, fd_count, -1);
+        for(int i = 0; i < fd_count; i++) {
+            if(pfds[i].revents & POLLIN) {
+                if(pfds[i].fd == STDIN_FILENO) {
+                    fgets_str(buf, MSG_LEN, stdin);
+                    send(clientfd, buf, strlen(buf), 0);
+                }
+                else {
+                    recv_w(clientfd, buf, CLIENT_BUF_LEN, 0);
+                    if(strcmp(buf, INVALID_CMD_MSG) == 0) {
+                        printf("Your command is invalid.\n");
+                    }
+                    else if(strcmp(buf, INVALID_MSG_MSG) == 0) {
+                        printf("Your message is invalid.\n");
+                    }
+                    else if(strcmp(buf, QUIT_MSG) == 0) {
+                        printf("Other user has quit the chat. The conversation will be closed now.");
+                        exit(0);
+                    }
+                    // Message from other user.
+                    else {
+                        printf("%s\n", buf);
+                    } 
+                }
+            }
+        }
+    }
 }

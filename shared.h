@@ -20,8 +20,11 @@ typedef struct pollfd pollfd;
 #define MAX_PORT_LEN 5
 #define NICKNAME_LEN 30
 #define MSG_LEN 2000
-#define CLIENT_BUF_LEN 2000
+#define CLIENT_BUF_LEN 2032 // NICKNAME_LEN + 2 + MSG_LEN
 #define NUM_CMDS 2
+
+#define NICK_CMD_ID 0
+#define QUIT_CMD_ID 1
 
 const char *INVALID_NICKNAME_MSG;
 const char *WAIT_MSG;

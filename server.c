@@ -162,10 +162,10 @@ void *chatHandler(void *arg_raw) {
     char **nicknames = malloc(sizeof(char *) * fd_size);
     for(int i = 0; i < fd_size; i++) {
         pfds[i].fd = arg[i].fd;
+        pfds[i].events = POLLIN;
         nicknames[i] = arg[i].nickname;
     }
     free(arg);
-
     bool terminate = false; // terminate = true means at least one client disconnected, so close the thread.
     while(!terminate) {
         int poll_count = poll(pfds, fd_count, -1);
@@ -176,27 +176,29 @@ void *chatHandler(void *arg_raw) {
         
         // Run through the existing connections looking for data to read    
         for(int i = 0; i < fd_count; i++) {
-            int nbytes = recv_w(pfds[i].fd, msg, sizeof(msg) - 1, 0);
-            if(nbytes <= 0) {
+            if(pfds[i].revents & POLLIN) {
+                int nbytes = recv_w(pfds[i].fd, msg, sizeof(msg) - 1, 0);
                 // This client has disconnected
-                if(nbytes == 0) {
-                    send_msg(pfds[i].fd, pfds, fd_count, QUIT_MSG);
+                if(nbytes <= 0) {
+                    if(nbytes < 0) {
+                        fprintf(stderr, "recv error\n");
+                    }
+                    execute_command(pfds[i].fd, pfds, fd_count, "/quit", nicknames[i]);
+                    terminate = true;
+                    break;
+                }
+                if(is_command(msg)) {
+
                 }
                 else {
-                    fprintf(stderr, "recv error\n");
+                    char buf[NICKNAME_LEN + MSG_LEN + 3]; // +2 to accounts for the distance between the nickname and the actual message
+                    if(!valid_msg(msg)) {
+                        send(pfds[i].fd, INVALID_MSG_MSG, strlen(INVALID_MSG_MSG), 0);
+                        continue;
+                    }
+                    sprintf(buf, "%s: %s", nicknames[i], msg);
+                    send_msg_all(pfds[i].fd, pfds, fd_count, buf);
                 }
-                // Close all connections in this thread
-                for(int j = 0; j < fd_count; j++) {
-                    close(pfds[j].fd);   
-                }           
-                terminate = true;
-                break;
-            }
-            if(is_command(msg)) {
-
-            }
-            else {
-                char buf[NICKNAME_LEN + MSG_LEN + 3]; // +2 to accounts for the distance between the nickname and the actual message
             }
         }
     }
