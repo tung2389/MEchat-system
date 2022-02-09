@@ -176,6 +176,7 @@ void *chatHandler(void *arg_raw) {
         
         // Run through the existing connections looking for data to read    
         for(int i = 0; i < fd_count; i++) {
+            if(terminate) break;
             if(pfds[i].revents & POLLIN) {
                 int nbytes = recv_w(pfds[i].fd, msg, sizeof(msg) - 1, 0);
                 // This client has disconnected
@@ -183,12 +184,11 @@ void *chatHandler(void *arg_raw) {
                     if(nbytes < 0) {
                         fprintf(stderr, "recv error\n");
                     }
-                    execute_command(pfds[i].fd, pfds, fd_count, "/quit", nicknames[i]);
-                    terminate = true;
+                    execute_command(pfds[i].fd, pfds, fd_count, "/quit", nicknames[i], &terminate);
                     break;
                 }
                 if(is_command(msg)) {
-
+                    execute_command(pfds[i].fd, pfds, fd_count, msg, nicknames[i], &terminate);
                 }
                 else {
                     char buf[NICKNAME_LEN + MSG_LEN + 3]; // +2 to accounts for the distance between the nickname and the actual message

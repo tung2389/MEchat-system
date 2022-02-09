@@ -57,7 +57,7 @@ int get_cmd_id(const char *cmd) {
     return -1;
 }
 
-void execute_command(int sendfd, pollfd *pfds, int fd_count, const char *cmd, char *nickname) {
+void execute_command(int sendfd, pollfd *pfds, int fd_count, const char *cmd, char *nickname, bool *terminate) {
     int cmd_id = get_cmd_id(cmd);
     if(cmd_id == -1) {
         send(sendfd, INVALID_CMD_MSG, strlen(INVALID_CMD_MSG), 0);
@@ -67,6 +67,7 @@ void execute_command(int sendfd, pollfd *pfds, int fd_count, const char *cmd, ch
         int len = strlen(" changes nickname to ");
         char msg[NICKNAME_LEN + len + NICKNAME_LEN + 1]; // +2 to accounts for the distance between the nickname and the actual message
         sprintf(msg, "%s changes nickname to %s", nickname, cmd + strlen("/nickname "));
+        strcpy(nickname, cmd + strlen("/nickname "));
         send_msg_all(sendfd, pfds, fd_count, msg);
     }
     else if(cmd_id == QUIT_CMD_ID) {
@@ -75,6 +76,7 @@ void execute_command(int sendfd, pollfd *pfds, int fd_count, const char *cmd, ch
         for(int j = 0; j < fd_count; j++) {
             close(pfds[j].fd);   
         }         
+        *terminate = true;
     }
 }
 

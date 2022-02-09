@@ -20,7 +20,7 @@ void send_msg(int sendfd, pollfd *pfds, int fd_count, const char *msg);
 void send_msg_all(int sendfd, pollfd *pfds, int fd_count, const char *msg);
 bool is_command(char *msg);
 bool valid_command(char *cmd);
-void execute_command(int sendfd, pollfd *pfds, int fd_count, const char *cmd, char *nickname);
+void execute_command(int sendfd, pollfd *pfds, int fd_count, const char *cmd, char *nickname, bool *terminate);
 bool valid_msg(char *msg);
 
 #endif

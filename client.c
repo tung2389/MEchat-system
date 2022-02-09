@@ -82,7 +82,7 @@ void handleChatting(int clientfd, char *buf) {
         pfds[i].events = POLLIN;
     }
 
-    while(strcmp(buf, QUIT_MSG) != 0) {
+    while(1) {
         int poll_count = poll(pfds, fd_count, -1);
         for(int i = 0; i < fd_count; i++) {
             if(pfds[i].revents & POLLIN) {
@@ -91,7 +91,11 @@ void handleChatting(int clientfd, char *buf) {
                     send(clientfd, buf, strlen(buf), 0);
                 }
                 else {
-                    recv_w(clientfd, buf, CLIENT_BUF_LEN, 0);
+                    int nbytes = recv_w(clientfd, buf, CLIENT_BUF_LEN, 0);
+                    if(nbytes <= 0) {
+                        printf("The server has closed connection.\n");
+                        exit(0);
+                    }
                     if(strcmp(buf, INVALID_CMD_MSG) == 0) {
                         printf("Your command is invalid.\n");
                     }
@@ -104,7 +108,7 @@ void handleChatting(int clientfd, char *buf) {
                     }
                     // Message from other user.
                     else {
-                        printf("%s\n", buf);
+                        printf("\n%s\n", buf);
                     } 
                 }
             }
