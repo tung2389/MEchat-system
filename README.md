@@ -33,7 +33,7 @@ MEchat contains two applications:
 
 1. If all current clients has been matched into pairs, then the server put the client on the wait until there’s a new connected client and send the message "#wait" to the client.
 2. If there’s another client waiting to be matched, then the server will send the message "#matched_to_[NICKNAME]” to both clients to notify that they have been matched to each other. Then, the server proceeds to the [chatting phase](#Chatting-phase) and spawn a separate thread to serve the conversation between these two clients.
-    1. The reasons that I spawn a new thread to serve each conversation between any two client is that this approach has reasonable complexity. Implementing I/O multiplexing on all clients is quite complex in C, and it involves downloading and building external libraries, such as GLib (for example, you need a hash table to efficiently associate a client with its corresponding partner).
+    1. The reasons that I spawn a new thread to serve each conversation between any two client is that this approach has a reasonable complexity. Implementing I/O multiplexing on all clients is quite complex in C, and it involves downloading and building external libraries, such as GLib (for example, you need a hash table to efficiently associate a client with its corresponding partner).
 
 ### Chatting phase
 
@@ -60,10 +60,13 @@ MEchat contains two applications:
 | /quit         |                       | Quit the chat, close the connection |
 | /nickname     | [nickname]            | Change nickname                     |
 
+## 3. Some implementations detail:
+- The server uses ```poll()``` at the main thread to pick up new connections and nicknames sent by those new clients. Although ```epoll``` scales better, it's just compatible with Linux machine, while ```poll``` is a POSIX standard interface. Therefore, for I/O multiplexing, I use ```poll``` instead of ```epoll``` for the sake of portability.
 
-- For I/O multiplexing, I will use ```poll``` instead of ```epoll``` for the sake of portability, although ```epoll``` scales better. ```poll``` is a POSIX standard interface, while epoll is Linux-specific.
-- At the client side, the user sends a message by entering the message in the terminal, then hit ```Enter``` key.
-- When receive a new client without any waiting client, the server will pass
+- The task of receiving and handling nicknames will be handled by ```poll``` in the main thread, then those nicknames will be passed to the child thread to handle new conversation when there's a match. 
+    - Another approach that I have considered is giving all I/O multiplexing control to a new thread once there's a new connection, then let the thread handle the task of asking for nickname and waiting for a match. Once there's a match, the thread will just handle the conversation and the server will continue to listen for new connection. However, this implementation will make the code more complex while just saving a very trivial amount of memory. Therefore, I have decided to go with the first approach.
+
+- At the client side, the user sends a message by typing the message in the terminal, then hit ```Enter``` key.
 
 # Usage
 - MEchat requires no additional library. You just need an UNIX or UNIX-like OS to run MEchat.
