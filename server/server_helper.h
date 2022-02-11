@@ -2,7 +2,7 @@
 #define SERVER_HELPER
 
 #include <poll.h>
-#include "shared.h"
+#include "../shared.h"
 
 /*
 Functions for intiation phase
@@ -14,6 +14,14 @@ bool valid_nickname(char *nickname);
 /*
 Functions for chatting phase
 */
+
+// User's info that will be passed into new thread
+typedef struct {
+    int fd;
+    char *nickname;
+} usr_info;
+
+void *chatHandler(void *arg);
 
 // Broadcast the message to all clients except the sending client
 void send_msg(int sendfd, pollfd *pfds, int fd_count, const char *msg);

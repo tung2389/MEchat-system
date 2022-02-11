@@ -12,18 +12,10 @@
 #include <pthread.h>
 #include <poll.h>
 
-#include "socket_util.h"
-#include "util.h"
 #include "server_helper.h"
-#include "shared.h"
-
-// User's info that will be passed into new thread
-typedef struct {
-    int fd;
-    char *nickname;
-} usr_info;
-
-void *chatHandler(void *arg);
+#include "../socket_util.h"
+#include "../util.h"
+#include "../shared.h"
 
 int main(int argc, char **argv)
 {
@@ -148,68 +140,4 @@ int main(int argc, char **argv)
 
     free(pfds);
     return 0;
-}
-
-void *chatHandler(void *arg_raw) {
-    pthread_detach(pthread_self());
-    usr_info *arg = (usr_info *) arg_raw;
-    char msg[MSG_LEN + 2]; // +1 to check for message which is too long
-
-    int fd_count = 2;
-    int fd_size = 2;
-    pollfd *pfds = malloc(sizeof(pollfd) * fd_size);
-    /*
-    Save all nicknames in paralell with their corresponding socket descriptor using an array, since we do not have a hash table in C to keep track of 
-    this association. Later, if the need for adding more user or removing users to and from the this chat room arises, the adding and removing function
-    for nicknames can be implemented the same as for pfds. 
-    */
-    char **nicknames = malloc(sizeof(char *) * fd_size);
-    for(int i = 0; i < fd_size; i++) {
-        pfds[i].fd = arg[i].fd;
-        pfds[i].events = POLLIN;
-        nicknames[i] = arg[i].nickname;
-    }
-    free(arg);
-    bool terminate = false; // terminate = true means at least one client disconnected, so close the thread.
-    while(!terminate) {
-        int poll_count = poll(pfds, fd_count, -1);
-        if(poll_count == -1) {
-            fprintf(stderr, "poll error\n");
-            exit(1);
-        }
-        
-        // Run through the existing connections looking for data to read    
-        for(int i = 0; i < fd_count; i++) {
-            if(terminate) break;
-            if(pfds[i].revents & POLLIN) {
-                int nbytes = recv_w(pfds[i].fd, msg, sizeof(msg) - 1, 0);
-                // This client has disconnected
-                if(nbytes <= 0) {
-                    if(nbytes < 0) {
-                        fprintf(stderr, "recv error\n");
-                    }
-                    execute_command(pfds[i].fd, pfds, fd_count, "/quit", nicknames[i], &terminate);
-                    break;
-                }
-                if(is_command(msg)) {
-                    execute_command(pfds[i].fd, pfds, fd_count, msg, nicknames[i], &terminate);
-                }
-                else {
-                    char buf[NICKNAME_LEN + MSG_LEN + 3]; // +2 to accounts for the distance between the nickname and the actual message
-                    if(!valid_msg(msg)) {
-                        send(pfds[i].fd, INVALID_MSG_MSG, strlen(INVALID_MSG_MSG), 0);
-                        continue;
-                    }
-                    sprintf(buf, "%s: %s", nicknames[i], msg);
-                    send_msg_all(pfds[i].fd, pfds, fd_count, buf);
-                }
-            }
-        }
-    }
-
-    free(pfds);
-    for(int i = 0; i < fd_count; i++) {
-        free(nicknames[i]);
-    }
-    free(nicknames);
 }

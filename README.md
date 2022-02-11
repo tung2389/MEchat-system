@@ -77,12 +77,12 @@ MEchat contains two applications:
 - MEchat requires no additional library. You just need an UNIX or UNIX-like OS to run MEchat.
 1. Clone this repo.
 2. ```cd``` into the repo, then type the command ```make all```.
-3. Run the server: ```./server <PORT>```
-4. Run a client: ```./client <IP> <PORT>```
+3. Run the server: ```./chat_server <PORT>```
+4. Run a client: ```./chat_client <IP> <PORT>```
 
 ### An example of testing MEchat in local machine:
 ```bash
 ./server 8000
 ./client localhost 8000
 ```
-- Then open another terminal window, and run the command ```./client localhost 8000``` again to test the chat function between two clients.
+- Then open another terminal window, and run the command ```./chat_client localhost 8000``` again to test the chat function between two clients.

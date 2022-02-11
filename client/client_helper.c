@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <stdbool.h>
-#include <ctype.h>
 #include <netdb.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -11,43 +9,9 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <poll.h>
-
-#include "socket_util.h"
-#include "util.h"
-#include "shared.h"
-
-// If the number of bytes received <= 0, then the server has disconnected, so the client will exit.
-ssize_t client_recv(int sockfd, void *buf_raw, size_t len, int flags);
-
-void sendNickname(int clientfd, char *nickname, char *buf);
-void handleMatching(int clientfd, char *buf);
-void handleChatting(int clientfd, char *buf);
-
-int main(int argc, char **argv)
-{   
-    char *host, *port;
-    char nickname[NICKNAME_LEN + 2]; // + 1 to account for the newline character.
-    char buf[CLIENT_BUF_LEN + 1];
-    // Don't buffer on stdout, since this is a chat app.
-    setbuf(stdout, NULL);
-    
-    if (argc != 3) {
-        fprintf(stderr, "usage: %s <host> <port>\n", argv[0]);
-        exit(1);
-    }
-    host = argv[1], port = argv[2];
-
-    int clientfd = open_clientfd(host, port);
-    if(clientfd == -1) {
-        exit(1);
-    }
-    sendNickname(clientfd, nickname, buf);
-    handleMatching(clientfd, buf);
-    handleChatting(clientfd, buf);
-
-    close(clientfd);
-    return 0;
-}
+#include "../socket_util.h"
+#include "../util.h"
+#include "../shared.h"
 
 ssize_t client_recv(int sockfd, void *buf_raw, size_t len, int flags) {
     char *buf = buf_raw;

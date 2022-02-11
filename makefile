@@ -1,22 +1,33 @@
+CLIENT_NAME := chat_client
+SERVER_NAME := chat_server
+
+CDIR=client/
+SDIR=server/
+CPATH=$(CDIR)client.c
+SPATH=$(SDIR)server.c
+
 all: client server
 
 headers := socket_util.h util.h shared.h
 util := socket_util.o util.o shared.o
 
-client: client.o $(util)
-	gcc client.o $(util) -o client
+client: $(CDIR)client.o $(CDIR)client_helper.o $(util)
+	gcc $(CDIR)client.o $(CDIR)client_helper.o $(util) -o $(CLIENT_NAME)
 
-client.o: client.c $(headers)
-	gcc -c client.c
+client.o: $(CDIR)client.c $(headers)
+	gcc -c $(CDIR)client.c -o $(CDIR)client.o
 
-server: server.o server_helper.o $(util)
-	gcc -pthread server.o server_helper.o $(util) -o server
+client_helper.o: $(CDIR)client_helper.c $(headers)
+	gcc -c $(CDIR)client_helper.c -o $(CDIR)client_helper.o
 
-server.o: server.c server_helper.h $(headers)	 
-	gcc -c server.c
+server: $(SDIR)server.o $(SDIR)server_helper.o $(util)
+	gcc -pthread $(SDIR)server.o $(SDIR)server_helper.o $(util) -o $(SERVER_NAME)
 
-server_helper.o: server_helper.c shared.h
-	gcc -c server_helper.c
+server.o: $(SDIR)server.c $(SDIR)server_helper.h $(headers)	 
+	gcc -c $(SDIR)server.c -o $(SDIR)server.o
+
+server_helper.o: $(SDIR)server_helper.c $(SDIR)server_helper.h shared.h socket_util.h
+	gcc -c $(SDIR)server_helper.c -o $(SDIR)server_helper.o
 
 shared.o: shared.c
 	gcc -c shared.c
@@ -28,4 +39,4 @@ socket_util.o: socket_util.c shared.h
 	gcc -c socket_util.c
 
 clean:
-	rm *.o client server
+	rm *.o client/*.o server/*.o
