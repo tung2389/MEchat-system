@@ -82,7 +82,7 @@ MEchat contains two applications:
 
 ### An example of testing MEchat in local machine:
 ```bash
-./server 8000
-./client localhost 8000
+./chat_server 8000
+./chat_client localhost 8000
 ```
 - Then open another terminal window, and run the command ```./chat_client localhost 8000``` again to test the chat function between two clients.
