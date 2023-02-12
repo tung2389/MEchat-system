@@ -37,7 +37,7 @@ int open_clientfd(char *host, char *port) {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     
-    if(rv = getaddrinfo(host, port, &hints, &servinfo) != 0) {
+    if((rv = getaddrinfo(host, port, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return -1;
     }
